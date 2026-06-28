@@ -1,0 +1,18 @@
+<header class="shell-header">
+  <h1>Gestione richieste accesso atti</h1>
+
+  @if (isLoggedIn()) {
+    <nav class="shell-nav">
+      <a routerLink="/richieste">Elenco richieste</a>
+      @if (canCreateRequest()) {
+        <a routerLink="/richieste/nuova">Nuova richiesta</a>
+      }
+      <span class="user-tag">{{ session()?.username }}</span>
+      <button type="button" (click)="logout()">Logout</button>
+    </nav>
+  }
+</header>
+
+<main class="shell-main">
+  <router-outlet />
+</main>
