@@ -30,7 +30,7 @@ export class AuthService {
           const normalizedRoles = roleSource
             .map((role) => role.replace('ROLE_', ''))
             .filter((role): role is RuoloUtente =>
-              role === 'OPERATORE' || role === 'RESPONSABILE'
+              role === 'OPERATORE' || role === 'RESPONSABILE' || role === 'ADMIN'
             );
 
           return {
@@ -50,6 +50,11 @@ export class AuthService {
 
   hasRole(role: RuoloUtente): boolean {
     return this.sessionState()?.roles.includes(role) ?? false;
+  }
+
+  hasAnyRole(roles: RuoloUtente[]): boolean {
+    const sessionRoles = this.sessionState()?.roles;
+    return roles.some((role) => sessionRoles?.includes(role));
   }
 
   private setSession(session: SessionUser): void {

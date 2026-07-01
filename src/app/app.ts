@@ -14,7 +14,9 @@ export class App {
 
   protected readonly session = this.authService.session;
   protected readonly isLoggedIn = computed(() => this.authService.isAuthenticated());
-  protected readonly canCreateRequest = computed(() => this.authService.hasRole('OPERATORE'));
+  protected readonly canCreateRequest = computed(() =>
+    this.authService.hasAnyRole(['OPERATORE', 'ADMIN'])
+  );
 
   protected logout(): void {
     this.authService.logout();

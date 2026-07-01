@@ -60,7 +60,7 @@ import { getAllowedTransitionsForRole, getStatoBadge } from '../../core/utils/wo
               <button type="submit" [disabled]="stateForm.invalid">Aggiorna stato</button>
             </form>
           } @else {
-            <p>Permesso negato: solo RESPONSABILE puo completare questa azione.</p>
+            <p>Accesso negato: permessi insufficienti per completare questa azione.</p>
           }
         </section>
 
@@ -70,7 +70,7 @@ import { getAllowedTransitionsForRole, getStatoBadge } from '../../core/utils/wo
           @if (canUploadAllegati()) {
             <input type="file" multiple (change)="upload($event)" />
           } @else {
-            <p class="hint">Solo OPERATORE può caricare allegati.</p>
+            <p class="hint">Solo OPERATORE o ADMIN puo caricare allegati.</p>
           }
 
           <table>
@@ -248,11 +248,11 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   protected canManageState(): boolean {
-    return this.authService.hasRole('RESPONSABILE');
+    return this.authService.hasAnyRole(['RESPONSABILE', 'ADMIN']);
   }
 
   protected canUploadAllegati(): boolean {
-    return this.authService.hasRole('OPERATORE');
+    return this.authService.hasAnyRole(['OPERATORE', 'ADMIN']);
   }
 
   protected statoBadge(stato: StatoRichiesta) {

@@ -27,6 +27,7 @@ export const routes: Routes = [
   {
 	path: 'richieste/:id/modifica',
 	canActivate: [authGuard],
+	data: { requiredRole: 'OPERATORE' },
 	loadComponent: () =>
 	  import('./features/requests/request-form-page.component').then(
 		(m) => m.RequestFormPageComponent

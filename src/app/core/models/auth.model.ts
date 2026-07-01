@@ -1,4 +1,4 @@
-export type RuoloUtente = 'OPERATORE' | 'RESPONSABILE';
+export type RuoloUtente = 'OPERATORE' | 'RESPONSABILE' | 'ADMIN';
 
 export interface SessionUser {
   username: string;

@@ -74,5 +74,21 @@ describe('AuthService', () => {
 
     expect(session.roles).toEqual(['OPERATORE']);
   });
+
+  it('mappa anche il ruolo ADMIN', async () => {
+    const sessionPromise = firstValueFrom(service.login('admin1', 'password123'));
+
+    const request = httpMock.expectOne('/api/auth/login');
+    request.flush({
+      token: 'jwt-token-4',
+      username: 'admin1',
+      roles: ['ROLE_ADMIN']
+    });
+
+    const session = await sessionPromise;
+
+    expect(session.roles).toEqual(['ADMIN']);
+    expect(service.hasAnyRole(['OPERATORE', 'ADMIN'])).toBe(true);
+  });
 });
 
