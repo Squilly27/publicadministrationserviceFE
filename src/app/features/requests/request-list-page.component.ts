@@ -219,10 +219,12 @@ export class RequestListPageComponent implements OnInit {
   }
 
   protected search(): void {
+    // Esegue una nuova ricerca riportando sempre la paginazione alla prima pagina.
     this.load(0);
   }
 
   protected reset(): void {
+    // Ripristina i filtri al default e ricarica i risultati.
     this.filterForm.reset({
       stato: '',
       protocollo: '',
@@ -234,6 +236,7 @@ export class RequestListPageComponent implements OnInit {
   }
 
   protected goToPage(page: number): void {
+    // Evita richieste fuori range quando l'utente naviga con la paginazione.
     if (page < 0 || page >= this.page().totalPages) {
       return;
     }
@@ -241,6 +244,7 @@ export class RequestListPageComponent implements OnInit {
   }
 
   private load(pageNumber = this.page().page): void {
+    // Costruisce il filtro dal form e aggiorna lo stato pagina con la risposta backend.
     this.errorMessage.set('');
     const form = this.filterForm.getRawValue();
 

@@ -236,6 +236,7 @@ export class RequestDetailPageComponent implements OnInit {
   private requestId = 0;
 
   ngOnInit(): void {
+    // Valida l'id route e avvia il caricamento completo della pagina dettaglio.
     const rawId = this.route.snapshot.paramMap.get('id');
     const id = Number(rawId);
     if (!rawId || Number.isNaN(id)) {
@@ -260,6 +261,7 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   protected changeState(): void {
+    // Applica il cambio stato solo se form valido e utente autorizzato.
     if (this.stateForm.invalid || !this.canManageState()) {
       return;
     }
@@ -280,6 +282,7 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   protected upload(event: Event): void {
+    // Supporta upload multiplo ed esegue un refresh allegati al termine di ogni file.
     const target = event.target as HTMLInputElement;
     const files = target.files;
     if (!files?.length) {
@@ -297,6 +300,7 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   protected download(allegato: Allegato): void {
+    // Forza il download client-side creando un URL temporaneo dal blob ricevuto.
     this.requestService.downloadAllegato(this.requestId, allegato.id).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
@@ -311,6 +315,7 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   private loadAll(id: number): void {
+    // Carica dettaglio e dati correlati (storico/allegati), poi inizializza le transizioni possibili.
     this.requestService.getById(id).subscribe({
       next: (data) => {
         this.richiesta.set(data);
@@ -339,6 +344,7 @@ export class RequestDetailPageComponent implements OnInit {
   }
 
   private getAllowedTransitionsForCurrentUser(stato: StatoRichiesta): StatoRichiesta[] {
+    // La visibilita transizioni dipende dallo stato corrente e dai permessi del profilo.
     return getAllowedTransitionsForRole(stato, this.canManageState());
   }
 
@@ -346,6 +352,7 @@ export class RequestDetailPageComponent implements OnInit {
     targetState: StatoRichiesta,
     nota: string
   ): Observable<RichiestaAccessoAtti> {
+    // Gestisce backend che richiedono un passaggio intermedio prima dello stato finale.
     const currentState = this.richiesta()?.stato;
     if (!currentState) {
       return this.requestService.changeState(this.requestId, {

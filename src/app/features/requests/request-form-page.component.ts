@@ -129,6 +129,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    // Se e presente l'id entra in modalita modifica, altrimenti ripristina/salva la bozza locale.
     const rawId = this.route.snapshot.paramMap.get('id');
     if (!rawId) {
       this.restoreNewRequestDraft();
@@ -165,6 +166,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   }
 
   protected submit(): void {
+    // Condivide la stessa submit per create/update in base alla presenza di requestId.
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.errorMessage.set('Compila tutti i campi obbligatori prima di salvare.');
@@ -204,6 +206,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   }
 
   private getApiErrorMessage(error: HttpErrorResponse, fallback: string): string {
+    // Priorita agli errori di validazione campo, poi messaggio backend o fallback.
     const validationErrors = error.error?.errors as Record<string, string> | undefined;
     if (validationErrors && Object.keys(validationErrors).length) {
       return Object.values(validationErrors).join(' ');
@@ -213,6 +216,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   }
 
   private restoreNewRequestDraft(): void {
+    // Ripristina la bozza solo per la creazione; se il JSON e corrotto la elimina.
     const rawDraft = sessionStorage.getItem(NEW_REQUEST_DRAFT_STORAGE_KEY);
     if (!rawDraft) {
       return;
@@ -235,6 +239,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   }
 
   private startPersistingNewRequestDraft(): void {
+    // Persistenza automatica della bozza ad ogni modifica del form.
     this.draftSubscription?.unsubscribe();
     this.draftSubscription = this.form.valueChanges.subscribe(() => {
       sessionStorage.setItem(NEW_REQUEST_DRAFT_STORAGE_KEY, JSON.stringify(this.form.getRawValue()));
