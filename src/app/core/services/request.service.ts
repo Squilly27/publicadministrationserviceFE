@@ -108,9 +108,25 @@ export class RequestService {
       };
     }
 
+    const content = Array.isArray(response.content) ? response.content : [];
+    const normalizedPage = Number.isFinite(response.page) && response.page >= 0 ? response.page : page;
+    const normalizedSize = Number.isFinite(response.size) && response.size > 0 ? response.size : size;
+    const normalizedTotalElements =
+      Number.isFinite(response.totalElements) && response.totalElements >= 0
+        ? response.totalElements
+        : content.length;
+    const normalizedTotalPages =
+      Number.isFinite(response.totalPages) && response.totalPages > 0
+        ? response.totalPages
+        : Math.max(1, Math.ceil(normalizedTotalElements / normalizedSize));
+
     return {
       ...response,
-      content: response.content.map((item) => this.normalizeRichiesta(item))
+      page: normalizedPage,
+      size: normalizedSize,
+      totalElements: normalizedTotalElements,
+      totalPages: normalizedTotalPages,
+      content: content.map((item) => this.normalizeRichiesta(item))
     };
   }
 
