@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 import {
   Allegato,
@@ -27,22 +27,13 @@ export class RequestService {
   }
 
   list(filter: RichiestaFilter): Observable<PagedResult<RichiestaAccessoAtti>> {
-    let params = new HttpParams()
-      .set('page', filter.page)
-      .set('size', filter.size)
-      .set('sort', 'id,desc');
+    const params = this.buildListParams(filter);
 
-    if (filter.stato) params = params.set('stato', filter.stato);
-    if (filter.protocollo) params = params.set('numeroProtocollo', filter.protocollo.trim());
-    if (filter.richiedente) params = params.set('cognomeRichiedente', filter.richiedente.trim());
-    if (filter.fromDate) params = params.set('fromDate', filter.fromDate);
-    if (filter.toDate) params = params.set('toDate', filter.toDate);
+    if (filter.nomeRichiedente?.trim()) {
+      return this.listWithClientSideNomeFilter(filter, params);
+    }
 
-    return this.http
-      .get<PagedResult<RichiestaAccessoAtti> | RichiestaAccessoAtti[]>(this.basePath, {
-        params
-      })
-      .pipe(map((response) => this.normalizePage(response, filter.page, filter.size)));
+    return this.getListPage(params, filter.page, filter.size);
   }
 
   getById(id: number): Observable<RichiestaAccessoAtti> {
@@ -93,6 +84,89 @@ export class RequestService {
     });
   }
 
+  private buildListParams(filter: RichiestaFilter): HttpParams {
+    let params = new HttpParams().set('sort', 'id,desc');
+
+    if (filter.stato) params = params.set('stato', filter.stato);
+    if (filter.protocollo) params = params.set('numeroProtocollo', filter.protocollo.trim());
+    if (filter.cognomeRichiedente) {
+      params = params.set('cognomeRichiedente', filter.cognomeRichiedente.trim());
+    }
+    if (filter.fromDate) params = params.set('fromDate', filter.fromDate);
+    if (filter.toDate) params = params.set('toDate', filter.toDate);
+
+    return params;
+  }
+
+  private getListPage(
+    baseParams: HttpParams,
+    page: number,
+    size: number
+  ): Observable<PagedResult<RichiestaAccessoAtti>> {
+    const params = baseParams.set('page', page).set('size', size);
+
+    return this.http
+      .get<PagedResult<RichiestaAccessoAtti> | RichiestaAccessoAtti[]>(this.basePath, {
+        params
+      })
+      .pipe(map((response) => this.normalizePage(response, page, size)));
+  }
+
+  private listWithClientSideNomeFilter(
+    filter: RichiestaFilter,
+    baseParams: HttpParams
+  ): Observable<PagedResult<RichiestaAccessoAtti>> {
+    return this.getListPage(baseParams, 0, filter.size).pipe(
+      switchMap((firstPage) => {
+        if (firstPage.totalPages <= 1) {
+          return of([firstPage]);
+        }
+
+        const remainingPages = Array.from({ length: firstPage.totalPages - 1 }, (_, index) =>
+          this.getListPage(baseParams, index + 1, filter.size)
+        );
+
+        return forkJoin([of(firstPage), ...remainingPages]);
+      }),
+      map((pages) => pages.flatMap((page) => page.content)),
+      map((items) => this.filterAndPaginateByRichiedente(items, filter))
+    );
+  }
+
+  private filterAndPaginateByRichiedente(
+    items: RichiestaAccessoAtti[],
+    filter: RichiestaFilter
+  ): PagedResult<RichiestaAccessoAtti> {
+    const normalizedNome = filter.nomeRichiedente?.trim().toLocaleLowerCase() ?? '';
+    const normalizedCognome = filter.cognomeRichiedente?.trim().toLocaleLowerCase() ?? '';
+    const filteredItems = items.filter((item) => {
+      const searchableText = this.buildRichiedenteSearchText(item);
+      return (
+        (!normalizedNome || searchableText.includes(normalizedNome)) &&
+        (!normalizedCognome || searchableText.includes(normalizedCognome))
+      );
+    });
+    const totalElements = filteredItems.length;
+    const totalPages = Math.max(1, Math.ceil(totalElements / filter.size));
+    const startIndex = filter.page * filter.size;
+
+    return {
+      content: filteredItems.slice(startIndex, startIndex + filter.size),
+      page: filter.page,
+      size: filter.size,
+      totalElements,
+      totalPages
+    };
+  }
+
+  private buildRichiedenteSearchText(item: RichiestaAccessoAtti): string {
+    return [item.nomeRichiedente, item.cognomeRichiedente, item.richiedente]
+      .filter((value): value is string => Boolean(value?.trim()))
+      .join(' ')
+      .trim()
+      .toLocaleLowerCase();
+  }
+
   private normalizePage(
     response: PagedResult<RichiestaAccessoAtti> | RichiestaAccessoAtti[],
     page: number,
@@ -141,4 +215,3 @@ export class RequestService {
     };
   }
 }
-

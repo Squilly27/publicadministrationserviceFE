@@ -41,7 +41,8 @@ export interface Allegato {
 export interface RichiestaFilter {
   stato?: StatoRichiesta | '';
   protocollo?: string;
-  richiedente?: string;
+  nomeRichiedente?: string;
+  cognomeRichiedente?: string;
   fromDate?: string;
   toDate?: string;
   page: number;
@@ -70,4 +71,3 @@ export interface RichiestaPayload {
   oggetto: string;
   descrizione: string;
 }
-

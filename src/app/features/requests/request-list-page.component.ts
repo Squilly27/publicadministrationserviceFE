@@ -35,8 +35,13 @@ import { getStatoBadge } from '../../core/utils/workflow.util';
         </label>
 
         <label>
-          Richiedente
-          <input formControlName="richiedente" type="text" />
+          Nome richiedente
+          <input formControlName="nomeRichiedente" type="text" />
+        </label>
+
+        <label>
+          Cognome richiedente
+          <input formControlName="cognomeRichiedente" type="text" />
         </label>
 
         <label>
@@ -205,7 +210,8 @@ export class RequestListPageComponent implements OnInit {
   protected readonly filterForm = this.fb.nonNullable.group({
     stato: '',
     protocollo: '',
-    richiedente: '',
+    nomeRichiedente: '',
+    cognomeRichiedente: '',
     fromDate: '',
     toDate: ''
   });
@@ -228,7 +234,8 @@ export class RequestListPageComponent implements OnInit {
     this.filterForm.reset({
       stato: '',
       protocollo: '',
-      richiedente: '',
+      nomeRichiedente: '',
+      cognomeRichiedente: '',
       fromDate: '',
       toDate: ''
     });
@@ -251,7 +258,8 @@ export class RequestListPageComponent implements OnInit {
     const filter: RichiestaFilter = {
       stato: form.stato as StatoRichiesta | '',
       protocollo: form.protocollo,
-      richiedente: form.richiedente,
+      nomeRichiedente: form.nomeRichiedente,
+      cognomeRichiedente: form.cognomeRichiedente,
       fromDate: form.fromDate,
       toDate: form.toDate,
       page: pageNumber,
