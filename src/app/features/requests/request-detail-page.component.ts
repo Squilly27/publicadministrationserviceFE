@@ -85,7 +85,7 @@ import { getAllowedTransitionsForRole, getStatoBadge } from '../../core/utils/wo
               @for (allegato of allegati(); track allegato.id) {
                 <tr>
                   <td>{{ allegato.nomeFile }}</td>
-                  <td>{{ allegato.dimensione ?? '-' }}</td>
+                  <td>{{ formatFileSize(allegato.dimensione) }}</td>
                   <td>
                     <button type="button" (click)="download(allegato)">Download</button>
                   </td>
@@ -258,6 +258,28 @@ export class RequestDetailPageComponent implements OnInit {
 
   protected statoBadge(stato: StatoRichiesta) {
     return getStatoBadge(stato);
+  }
+
+  protected formatFileSize(size?: number): string {
+    if (!Number.isFinite(size) || size === undefined || size < 0) {
+      return '-';
+    }
+
+    if (size < 1024) {
+      return '< 1 KB';
+    }
+
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let value = size / 1024;
+    let unitIndex = 0;
+
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
+    }
+
+    const decimals = value >= 10 ? 0 : 1;
+    return `${value.toFixed(decimals)} ${units[unitIndex]}`;
   }
 
   protected changeState(): void {

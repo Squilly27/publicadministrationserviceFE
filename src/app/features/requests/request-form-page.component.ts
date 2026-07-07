@@ -18,45 +18,103 @@ const NEW_REQUEST_DRAFT_STORAGE_KEY = 'pa-new-request-draft';
       <form [formGroup]="form" (ngSubmit)="submit()" class="request-form">
         <label>
           Numero protocollo
-          <input formControlName="numeroProtocollo" type="text" />
+          <input
+            formControlName="numeroProtocollo"
+            type="text"
+            [class.invalid-field]="isInvalidField('numeroProtocollo')"
+          />
+          @if (hasControlError('numeroProtocollo', 'required')) {
+            <small class="field-error">Il numero protocollo e obbligatorio.</small>
+          }
         </label>
 
         <label>
           Nome richiedente
-          <input formControlName="nomeRichiedente" type="text" />
+          <input
+            formControlName="nomeRichiedente"
+            type="text"
+            [class.invalid-field]="isInvalidField('nomeRichiedente')"
+          />
+          @if (hasControlError('nomeRichiedente', 'required')) {
+            <small class="field-error">Il nome richiedente e obbligatorio.</small>
+          }
         </label>
 
         <label>
           Cognome richiedente
-          <input formControlName="cognomeRichiedente" type="text" />
+          <input
+            formControlName="cognomeRichiedente"
+            type="text"
+            [class.invalid-field]="isInvalidField('cognomeRichiedente')"
+          />
+          @if (hasControlError('cognomeRichiedente', 'required')) {
+            <small class="field-error">Il cognome richiedente e obbligatorio.</small>
+          }
         </label>
 
         <label>
           Email richiedente
-          <input formControlName="emailRichiedente" type="email" />
+          <input
+            formControlName="emailRichiedente"
+            type="email"
+            [class.invalid-field]="isInvalidField('emailRichiedente')"
+          />
+          @if (hasControlError('emailRichiedente', 'required')) {
+            <small class="field-error">L'email e obbligatoria.</small>
+          }
+          @if (hasControlError('emailRichiedente', 'email')) {
+            <small class="field-error">Inserisci un indirizzo email valido.</small>
+          }
         </label>
 
         <label>
           Telefono richiedente (opzionale)
-          <input formControlName="telefonoRichiedente" type="text" />
+          <input
+            formControlName="telefonoRichiedente"
+            type="text"
+            [class.invalid-field]="isInvalidField('telefonoRichiedente')"
+          />
         </label>
 
         <label>
           Oggetto
-          <input formControlName="oggetto" type="text" />
+          <input
+            formControlName="oggetto"
+            type="text"
+            [class.invalid-field]="isInvalidField('oggetto')"
+          />
+          @if (hasControlError('oggetto', 'required')) {
+            <small class="field-error">L'oggetto e obbligatorio.</small>
+          }
         </label>
 
         <label>
           Descrizione
-          <textarea formControlName="descrizione" rows="5"></textarea>
+          <textarea
+            formControlName="descrizione"
+            rows="5"
+            [class.invalid-field]="isInvalidField('descrizione')"
+          ></textarea>
+          @if (hasControlError('descrizione', 'required')) {
+            <small class="field-error">La descrizione e obbligatoria.</small>
+          }
+          @if (hasControlError('descrizione', 'minlength')) {
+            <small class="field-error">
+              La descrizione deve contenere almeno 10 caratteri (attuali: {{ form.controls.descrizione.value.length }}).
+            </small>
+          }
         </label>
+
+        @if (submitAttempted() && form.invalid && !errorMessage()) {
+          <p class="error">Il salvataggio non puo partire: correggi i campi evidenziati.</p>
+        }
 
         @if (errorMessage()) {
           <p class="error">{{ errorMessage() }}</p>
         }
 
         <div class="actions">
-          <button type="submit" [disabled]="form.invalid || loading()">
+          <button type="submit" [disabled]="loading()">
             {{ loading() ? 'Salvataggio...' : 'Salva' }}
           </button>
           <a routerLink="/richieste">Annulla</a>
@@ -102,6 +160,21 @@ const NEW_REQUEST_DRAFT_STORAGE_KEY = 'pa-new-request-draft';
       .error {
         color: #b91c1c;
       }
+
+      .field-error {
+        color: #b91c1c;
+        font-size: 0.8rem;
+      }
+
+      .invalid-field {
+        border-color: #dc2626;
+      }
+
+      .invalid-field:focus {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+        outline: none;
+      }
     `
   ]
 })
@@ -114,6 +187,7 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly isEditMode = signal(false);
+  protected readonly submitAttempted = signal(false);
 
   private requestId: number | null = null;
   private draftSubscription: Subscription | null = null;
@@ -167,9 +241,11 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
 
   protected submit(): void {
     // Condivide la stessa submit per create/update in base alla presenza di requestId.
+    this.submitAttempted.set(true);
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.errorMessage.set('Compila tutti i campi obbligatori prima di salvare.');
+      this.errorMessage.set('Compila i campi obbligatori prima di salvare.');
       return;
     }
 
@@ -213,6 +289,36 @@ export class RequestFormPageComponent implements OnInit, OnDestroy {
     }
 
     return error.error?.message ?? fallback;
+  }
+
+  protected hasControlError(
+    controlName:
+      | 'numeroProtocollo'
+      | 'nomeRichiedente'
+      | 'cognomeRichiedente'
+      | 'emailRichiedente'
+      | 'telefonoRichiedente'
+      | 'oggetto'
+      | 'descrizione',
+    errorCode: string
+  ): boolean {
+    const control = this.form.controls[controlName];
+    const shouldShow = control.touched || control.dirty || this.submitAttempted();
+    return shouldShow && control.hasError(errorCode);
+  }
+
+  protected isInvalidField(
+    controlName:
+      | 'numeroProtocollo'
+      | 'nomeRichiedente'
+      | 'cognomeRichiedente'
+      | 'emailRichiedente'
+      | 'telefonoRichiedente'
+      | 'oggetto'
+      | 'descrizione'
+  ): boolean {
+    const control = this.form.controls[controlName];
+    return control.invalid && (control.touched || control.dirty || this.submitAttempted());
   }
 
   private restoreNewRequestDraft(): void {
